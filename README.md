@@ -205,7 +205,7 @@ Current speech analytics focus on broad arousal descriptors (*High Intensity*, *
 
 # 👨‍💻 Author & Acknowledgments
 
-* **Developer:** Ahmed Magdy Hassan – Faculty of Computers and Artificial Intelligence, Fayoum University (BI & Analytics Department).
+* **Developer:** Ahmed Magdy Hassan – Faculty of Computers and Artificial Intelligence, Fayoum University (CS Department).
 * **Acknowledgments:** Built using foundational open-source toolkits provided by Meta AI, OpenAI, CAMeL Lab, Alibaba Cloud, and Hugging Face.
 
 <div align="center">

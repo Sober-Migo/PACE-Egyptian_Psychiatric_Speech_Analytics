@@ -1,216 +1,145 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Smart Psychiatric Dashboard - PACE Engine</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+    <title>PACE - Psychiatric Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1100px; margin: auto; }
-        .header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        h2, h3 { margin-top: 0; color: #1e3a8a; }
-        .btn { width: 100%; padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 15px; }
-        .btn:hover { background-color: #1d4ed8; }
-        .btn-record { background-color: #dc2626; }
-        .btn-record:hover { background-color: #b91c1c; }
-        .recording-status { text-align: center; font-weight: bold; margin: 10px 0; color: #dc2626; display: none; }
-        .timeline-item { padding: 15px; background: #f8fafc; border-left: 4px solid #3b82f6; margin-bottom: 12px; border-radius: 4px; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; }
-        .badge-pos { background-color: #10b981; }
-        .badge-neg { background-color: #ef4444; }
-        .report-box { background: #fafafa; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-size: 15px; line-height: 1.7; color: #1e293b; }
-        .drive-analysis-container { margin-top: 25px; padding: 20px; background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 12px; }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #3b82f6; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 30px; margin: 0; }
+        .container { max-width: 1200px; margin: auto; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { font-size: 2.5rem; background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        .card { background: var(--card); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 25px; border: 1px solid #334155; }
+        .upload-area { border: 2px dashed #475569; padding: 40px; text-align: center; border-radius: 12px; transition: 0.3s; cursor: pointer; }
+        .upload-area:hover { border-color: var(--accent); background: #1e3a8a33; }
+        .btn { background: var(--accent); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 15px; width: 100%; }
+        .btn:hover { background: #2563eb; transform: translateY(-2px); }
+        .loader { display: none; text-align: center; padding: 40px; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #334155; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .timeline-item { padding: 15px; border-left: 3px solid var(--accent); background: #0f172a; margin-bottom: 10px; border-radius: 0 8px 8px 0; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; background: #334155; margin-right: 8px; }
+        .gradient-text { background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-top: 25px; }
+        #results { display: none; animation: fadeIn 0.8s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎙️ Patient Mood & Psychological Energy Monitor</h1>
-            <p>Real-time proactive system for evaluating energy and mood of psychotherapy sessions (Async Pipeline)</p>
+            <h1>🧠 PACE Core Analytics Engine</h1>
+            <p style="color: #94a3b8;">High-Fidelity Audio Ingestion & Psychiatric Report Generation</p>
         </div>
-        <div class="grid">
-            <div class="card">
-                <h2>🎮 Control & Input Panel</h2>
-                <hr style="border-color: #f1f5f9;">
-                
-                <h3 style="margin-top:20px;">📁 Batch Files Upload</h3>
-                <input type="file" id="audioFiles" accept="audio/*" multiple style="width: 100%; padding: 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;">
-                <button class="btn" onclick="uploadBatchFiles()">Analyze Session Instantly</button>
-                
-                <div class="drive-analysis-container">
-                    <h3 style="color: #16a34a; margin-bottom: 8px;">🔐 Direct Cloud Feed (Google Drive)</h3>
-                    <p style="font-size: 13px; color: #475569; margin: 0 0 12px 0;">Pull the entire session server-to-server without consuming your local bandwidth.</p>
-                    <input type="text" id="driveUrlInput" placeholder="https://drive.google.com/drive/folders/..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                    <button class="btn" style="background-color: #16a34a;" onclick="triggerDriveAnalysis()">Analyze Cloud Folder</button>
-                </div>
+        
+        <div class="card" id="inputPanel">
+            <div class="upload-area" onclick="document.getElementById('audioFiles').click()">
+                <h3 style="margin: 0; color: #cbd5e1;">📁 Click to Upload Session Audio Files</h3>
+                <p style="color: #64748b; font-size: 14px; margin-top: 10px;">Files are processed locally in 30-second asynchronous chunks.</p>
+            </div>
+            <input type="file" id="audioFiles" accept="audio/*" multiple style="display: none;" onchange="document.getElementById('fileLabel').innerText = this.files.length + ' files selected'">
+            <p id="fileLabel" style="text-align: center; color: #10b981; font-weight: bold; margin-top: 15px;"></p>
+            <button class="btn" onclick="startAnalysis()">🚀 Initialize Core Pipeline</button>
+        </div>
 
-                <h3 style="margin-top: 40px;">🛑 Instant Live Recording</h3>
-                <button class="btn btn-record" id="recordBtn" onclick="toggleRecording()">Start Recording Now</button>
-                <div class="recording-status" id="recordStatus">🛑 Recording your voice and dialect now...</div>
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <h2 class="gradient-text">Executing Tensor Operations...</h2>
+            <p style="color: #94a3b8;">Models are extracting acoustic prosody and generating semantic insight.</p>
+        </div>
+
+        <div id="results">
+            <div class="card">
+                <h2 class="gradient-text">📈 Session Psychological Energy Curve</h2>
+                <canvas id="moodChart" height="80"></canvas>
             </div>
             
             <div class="card">
-                <h2>📊 Real-Time Analytics & Clinical Report</h2>
-                <div id="loadingText" style="display:none; text-align:center; padding: 40px; font-size: 18px; color: #2563eb; font-weight: bold;">
-                    ⏳ Session accepted successfully! Secure background processing in progress...<br>
-                    <span id="pollingStatus" style="font-size: 14px; color: #64748b;">Updating data every 10 seconds to prevent connection timeouts...</span>
-                </div>
-                <div id="resultsWrapper" style="display:none;">
-                    <div style="background: #e0f2fe; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; color: #0369a1;">
-                        ⏱️ Total Pipeline Execution Time: <span id="totalLatency">0</span> seconds!
-                    </div>
-                    <h3>📝 Mood & Energy Timeline Log</h3>
-                    <div id="timelineContainer" style="max-height: 350px; overflow-y: auto; margin-bottom: 30px;"></div>
-                    <h3>🤖 Clinical Insight Report</h3>
-                    <div class="report-box" id="clinicalReport">The report will appear here...</div>
-                </div>
+                <h2 class="gradient-text">🤖 Qwen-1.5B Clinical Assessment</h2>
+                <div id="clinicalReport" style="line-height: 1.8; color: #cbd5e1;"></div>
+            </div>
+
+            <div class="card">
+                <h2 class="gradient-text">⏱️ Synchronized 30s Tensor Timeline</h2>
+                <div id="timelineContainer"></div>
             </div>
         </div>
     </div>
 
     <script>
-        let mediaRecorder;
-        let audioChunks = [];
-        let isRecording = false;
-        
-        const SERVER_BASE_URL = window.location.origin;
+        let chartInstance = null;
 
-        async function toggleRecording() {
-            const btn = document.getElementById('recordBtn');
-            const status = document.getElementById('recordStatus');
-            if (!isRecording) {
-                audioChunks = [];
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-                } else {
-                    mediaRecorder = new MediaRecorder(stream);
-                }
-                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-                mediaRecorder.onstop = async () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    await sendAudioData([new File([audioBlob], "live_recording.wav")]);
-                };
-                mediaRecorder.start();
-                btn.innerText = "Stop Recording & Send Data";
-                status.style.display = "block";
-                isRecording = true;
-            } else {
-                mediaRecorder.stop();
-                btn.innerText = "Start Recording Now";
-                status.style.display = "none";
-                isRecording = false;
-            }
-        }
-
-        function triggerDriveAnalysis() {
-            const driveUrl = document.getElementById('driveUrlInput').value.trim();
-            if (!driveUrl) {
-                alert("Please enter a Google Drive folder link first!");
-                return;
-            }
-            
-            document.getElementById('resultsWrapper').style.display = "none";
-            document.getElementById('loadingText').style.display = "block";
-        
-            fetch(`${SERVER_BASE_URL}/analyze_google_drive/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ drive_url: driveUrl })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    pollTaskStatus(data.task_id); 
-                } else {
-                    document.getElementById('loadingText').style.display = "none";
-                    alert("Server rejected the cloud link: " + data.detail);
-                }
-            })
-            .catch(err => {
-                document.getElementById('loadingText').style.display = "none";
-                console.error("🚨 Cloud pipeline network failure:", err);
-                alert("Failed to connect to the Cloud Engine Pipeline.");
-            });
-        }            
-
-        async function uploadBatchFiles() {
+        async function startAnalysis() {
             const fileInput = document.getElementById('audioFiles');
-            if (fileInput.files.length === 0) { alert("Please select one or more files first!"); return; }
-            await sendAudioData(fileInput.files);
-        }
+            if (fileInput.files.length === 0) return alert("Select audio files first.");
+            
+            document.getElementById('inputPanel').style.display = "none";
+            document.getElementById('loader').style.display = "block";
 
-        async function sendAudioData(filesList) {
-            document.getElementById('resultsWrapper').style.display = "none";
-            document.getElementById('loadingText').style.display = "block";
             const formData = new FormData();
-            for (let i = 0; i < filesList.length; i++) {
-                formData.append("files", filesList[i]);
-            }
+            for (let f of fileInput.files) formData.append("files", f);
+
             try {
-                const response = await fetch(`${SERVER_BASE_URL}/analyze_session_batch/`, { method: "POST", body: formData });
-                const initialData = await response.json();
-                if (initialData.success && initialData.task_id) {
-                    pollTaskStatus(initialData.task_id);
-                } else {
-                    document.getElementById('loadingText').style.display = "none";
-                    alert("Failed to start the task on the server.");
-                }
-            } catch (err) {
-                document.getElementById('loadingText').style.display = "none";
-                alert("Failed to connect to the server.");
-            }
-        }
+                const res = await fetch(window.location.origin + "/analyze/", { method: "POST", body: formData });
+                const data = await res.json();
+                
+                document.getElementById('loader').style.display = "none";
+                document.getElementById('results').style.display = "block";
+                
+                document.getElementById('clinicalReport').innerHTML = data.report;
+                
+                const container = document.getElementById('timelineContainer');
+                container.innerHTML = "";
+                
+                let chartLabels = [];
+                let chartData = [];
 
-        function pollTaskStatus(taskId) {
-            const interval = setInterval(async () => {
-                try {
-                    const res = await fetch(`${SERVER_BASE_URL}/check_task/${taskId}`);
-                    const taskData = await res.json();
+                data.timeline.forEach((chunk) => {
+                    let min = String(Math.floor(chunk.timestamp_sec / 60)).padStart(2, '0');
+                    let sec = String(chunk.timestamp_sec % 60).padStart(2, '0');
+                    let timeStr = `${min}:${sec}`;
                     
-                    if (taskData.status === "completed") {
-                        clearInterval(interval);
-                        document.getElementById('loadingText').style.display = "none";
-                        
-                        document.getElementById('totalLatency').innerText = taskData.session_statistics.total_processing_latency_sec;
-                        document.getElementById('clinicalReport').innerHTML = taskData.clinical_insight_report;
-                        
-                        const container = document.getElementById('timelineContainer');
-                        container.innerHTML = "";
-                        
-                        taskData.detailed_timeline.forEach((chunk, idx) => {
-                            const div = document.createElement('div');
-                            div.className = 'timeline-item';
-                            
-                            let totalSeconds = idx * 30;
-                            let minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-                            let seconds = String(totalSeconds % 60).padStart(2, '0');
-                            let timestampDisplay = `${minutes}:${seconds}`;
+                    chartLabels.push(timeStr);
+                    let energyScore = chunk.vocal_acoustic_emotion.includes("High") ? 3 : (chunk.vocal_acoustic_emotion.includes("Low") ? 1 : 2);
+                    chartData.push(energyScore);
 
-                            div.innerHTML = `
-                                <strong>⏱️ Timestamp [${timestampDisplay}]</strong>
-                                <p style="margin: 8px 0; font-size: 16px; font-weight: bold; color: #1e3a8a;">🗣️ Transcript: "${chunk.transcript}"</p>
-                                <div style="margin-top: 10px;">
-                                    <span class="badge ${chunk.semantic_sentiment === 'positive' ? 'badge-pos' : 'badge-neg'}">📝 Semantic Mood: ${chunk.semantic_sentiment}</span>
-                                    <span class="badge" style="background-color: #8b5cf6; margin-right: 8px;">🔊 Vocal Energy: ${chunk.vocal_acoustic_emotion}</span>
-                                </div>
-                            `;
-                            container.appendChild(div);
-                        });
-                        document.getElementById('resultsWrapper').style.display = "block";
-                    } else if (taskData.status === "failed") {
-                        clearInterval(interval);
-                        document.getElementById('loadingText').style.display = "none";
-                        alert("An error occurred during background session processing: " + taskData.detail);
+                    container.innerHTML += `
+                        <div class="timeline-item">
+                            <span class="badge" style="background: var(--accent);">[${timeStr}]</span>
+                            <span class="badge">Acoustic: ${chunk.vocal_acoustic_emotion}</span>
+                            <span class="badge">Semantic: ${chunk.semantic_sentiment}</span>
+                            <p style="margin: 10px 0 0 0; font-size: 15px;">"${chunk.transcript}"</p>
+                        </div>
+                    `;
+                });
+
+                if(chartInstance) chartInstance.destroy();
+                const ctx = document.getElementById('moodChart').getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Psychological Arousal Intensity',
+                            data: chartData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true, max: 4, ticks: { color: '#cbd5e1', callback: function(value) { if(value===1) return 'Low Energy'; if(value===2) return 'Neutral'; if(value===3) return 'High Intensity'; return ''; } } }, x: { ticks: { color: '#cbd5e1'} } },
+                        plugins: { legend: { display: false } }
                     }
-                } catch (e) {
-                    clearInterval(interval);
-                    document.getElementById('loadingText').style.display = "none";
-                    alert("Connection failed while updating data.");
-                }
-            }, 10000);
+                });
+            } catch (err) {
+                alert("Pipeline execution failed. Ensure backend is running.");
+                document.getElementById('loader').style.display = "none";
+                document.getElementById('inputPanel').style.display = "block";
+                console.error(err);
+            }
         }
     </script>
 </body>

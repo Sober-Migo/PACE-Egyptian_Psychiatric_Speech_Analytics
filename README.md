@@ -8,7 +8,6 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)](https://pytorch.org/)
 [![Transformers](https://img.shields.io/badge/%F0%9F%A4%97-Transformers-yellow.svg)](https://huggingface.co/docs/transformers/index)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green.svg)](https://fastapi.tiangolo.com/)
-[![License](https://img.shields.io/badge/License-Academic-success.svg)]()
 
 <br>
 
@@ -22,23 +21,24 @@
 
 # 📖 Overview
 
-**PACE (Psychiatric Analytics Core Engine)** is an enterprise-ready multimodal AI framework engineered to power therapist-patient mental health platforms through automated, high-fidelity vocal and semantic session analysis. Deployed natively inside high-throughput architectures, PACE decouples acoustic speech characteristics from dialect-specific textual semantics to construct continuous chronological session timelines, enabling large language models to generate structured psychiatric assessments.
+A Kaggle-native, multi-GPU asynchronous AI framework for Egyptian Arabic psychiatric speech analytics. Integrates late decision-level multimodal fusion (Wav2Vec2 + Whisper V3 Large + CAMeLBERT) with Qwen-powered clinical report generation.
 
-Traditional SER setups struggle with long-form clinical audio and dialectal shifts. PACE bridges this gap via a production-grade asynchronous pipeline that ingests raw sessions, handles dynamic noise reduction, splits records into synchronized 30-second tensor windows, and parallelizes multi-model execution across isolated GPU lanes without system deadlocks.
+Traditional SER setups struggle with long-form clinical audio and dialectal shifts. PACE bridges this gap via a production-grade asynchronous pipeline that ingests raw sessions, handles dynamic noise reduction, splits records into synchronized 30-second tensor windows, and parallelizes multi-model execution across isolated GPU lanes.
 
 > ⚠️ **Disclaimer:** PACE is intended exclusively for academic research and clinical decision support. It is not a certified medical diagnostic system and does not replace professional psychiatric evaluation.
 
 ---
 
-# ☁️ Hardware Architecture: The Kaggle Dependency
+# ☁️ Architecture: The Zero-Token Kaggle Pipeline
 
 **Notice: There is no local environment setup for this project.**
 
-PACE runs four massive transformer models concurrently (`Whisper V3 Large`, `Qwen 1.5B`, `Wav2Vec2`, and `CAMeLBERT`). Attempting to execute this full stack on a standard local machine or a free-tier cloud instance will instantly result in Out-Of-Memory (OOM) crashes.
+PACE runs four massive transformer models concurrently. Attempting to execute this stack on a standard local machine will instantly result in Out-Of-Memory (OOM) crashes. 
 
-To solve this, **the project is designed exclusively to run on Kaggle's dual T4 GPU environment.** We have adopted a strict MLOps decoupling strategy:
-1. **The Codebase (This Repository):** Contains the clean, modular backend API, frontend UI, and routing logic.
-2. **The Compute Runner (Kaggle):** The included `03_Model_API.ipynb` acts as a deployment runner. It clones this repository directly into a Kaggle kernel, distributes the heavy AI models across `CUDA:0` and `CUDA:1`, securely injects environment variables, and exposes the FastAPI server to the web.
+To solve this, **the project is designed exclusively to run on Kaggle's dual T4 GPU environment** utilizing a strict MLOps decoupling strategy:
+1. **Zero-Token Offline Models:** Instead of pulling models from Hugging Face APIs, the architecture binds directly to Kaggle's internal `/kaggle/input/` datasets. This drastically reduces network bottlenecks and removes the need for `HF_TOKEN` authentications.
+2. **Zero-Token Networking:** We utilize `Localtunnel` inside the Kaggle kernel to expose the internal FastAPI endpoints to a public, interactive frontend without requiring Ngrok accounts or authentication keys.
+3. **Dynamic Resource Chunking:** The engine programmatically intercepts massive audio uploads, mathematically forces them into safe 30-second processing windows, and resolves the streams before memory degradation occurs.
 
 ---
 
@@ -80,26 +80,14 @@ PACE adopts a **Late Decision-Level Multimodal Fusion Architecture**. Individual
 
 # 🤖 Core AI Model Stack
 
-1. **Acoustic Emotion Recognition (SER/AER):** Fine-tuned `facebook/wav2vec2-base` (Deployed: [am4magdy/Baved_3e5b16](https://huggingface.co/am4magdy/Baved_3e5b16)). Extracts language-agnostic features (pitch, spectral density, energy) to isolate arousal shifts.
-2. **Egyptian Arabic Speech Recognition (ASR):** LoRA-adapted `Whisper-Large-V3` (Deployed: [am4magdy/egyptian-whisper-large-v3-standalone](https://huggingface.co/am4magdy/egyptian-whisper-large-v3-standalone)). Tuned to handle complex Egyptian vernacular expressions, code-switching, and clinical slang.
-3. **Semantic Emotion Analysis:** [CAMeLBERT](https://huggingface.co/camel-lab/camelbert-ca-sentiment) model executing localized Arabic text-classification to determine linguistic valence, complementing raw acoustic metrics.
-4. **Clinical Report Generation:** [Qwen](https://huggingface.co/Qwen) Text-Generation Engine customized with specialized repetition penalties, low-temperature constraints, and punctuation token-suppression loops to produce clean clinical diagnostic narratives.
+1. **Acoustic Emotion Recognition (SER/AER):** Fine-tuned `facebook/wav2vec2-base` (Deployed: [am4magdy/Baved_3e5b16](https://huggingface.co/am4magdy/Baved_3e5b16)). Extracts language-agnostic features.
+2. **Egyptian Arabic Speech Recognition (ASR):** LoRA-adapted `Whisper-Large-V3` (Deployed: [am4magdy/egyptian-whisper-large-v3-standalone](https://huggingface.co/am4magdy/egyptian-whisper-large-v3-standalone)). Tuned for complex Egyptian vernacular.
+3. **Semantic Emotion Analysis:** `CAMeLBERT` model executing localized Arabic text-classification.
+4. **Clinical Report Generation:** `Qwen-1.5B` customized with specialized repetition penalties to produce clean clinical diagnostic narratives.
 
 ---
 
-# 🛠️ MLOps Engineering & Optimization Highlights
-
-* **Multi-GPU Workload Balancing:** Implemented strict hardware-level synchronization barriers utilizing separate PyTorch CUDA streams. Heavy text-generation pipelines are pinned on `cuda:0`, while transcription and dense convolutional acoustic layers run on `cuda:1`, eliminating memory leakage and VRAM over-allocation.
-* **Micro-Batching Optimization:** Tuned the active batch generation framework (`BATCH_SIZE_LIMIT = 8`) during beam search configurations, stabilizing peak memory footprints and preventing OOM crashes during long clinical runs.
-* **Signal Resampling and Masking:** Integrates non-stationary noise-reduction routines via `noisereduce` with an intentional 80% decrease factor alongside strict 16,000Hz mono resampling to eradicate environment distortions while protecting delicate emotional prosody.
-
----
-
-# 📊 Hyperparameter Grid Search & Benchmarks
-
-A rigorous hyperparameter grid search evaluated model boundaries over controlled 3-epoch execution runs, establishing `Wav2Vec2` as the optimal acoustic encoder over `HuBERT` setups.
-
-### 🏆 Best Hyperparameter Configurations Matrix
+# 📊 Benchmark Accuracies
 
 | Dataset | Best Performing Backbone | Learning Rate | Batch Size | Validation Accuracy |
 | :--- | :--- | :---: | :---: | :---: |
@@ -109,47 +97,26 @@ A rigorous hyperparameter grid search evaluated model boundaries over controlled
 | **TESS** (Controlled Studio Environment) | `wav2vec2-base` | 3e-05 | 8 | **100.0%** |
 
 <p align="center">
-  <img src="assets/HuBERT_vs_Wav2Vec2.png" width="450" alt="Backbone Performance Matrix">
-  <img src="assets/best_accuracy_per_dataset.png" width="450" alt="Validation Boundaries Metrics">
-</p>
-
-### 📈 Detailed Performance Metrics & Confusion Matrices
-
-The fine-tuned acoustic engine's class-wise discrimination capability was validated using confusion matrices across distinct language profiles, recording backgrounds, and clinical arousal intensities:
-
-* **BAVED Confusion Matrix:** Demonstrates highly stable class alignment on formal and informal Arabic speech tokens, maintaining clean true-positive detection tracking for target psychological distress attributes.
-* **EYASE Confusion Matrix:** Validates structural resilience against colloquial Egyptian Arabic dialects, effectively matching native vocal expressions into baseline behavioral dimensions without semantic interference.
-* **CREMA-D Confusion Matrix:** Evaluates cross-domain out-of-distribution robustness utilizing multi-speaker real-world English recordings, prioritizing clinical diagnostic safety through a reliable high-recall profile.
-* **TESS Confusion Matrix:** Confirms baseline statistical boundaries under controlled laboratory studio conditions, delivering ideal feature isolation boundaries.
-
-<p align="center">
   <img src="assets/confusion_matrix_BAVED.png" width="420" alt="BAVED Confusion Matrix">
   <img src="assets/confusion_matrix_EYASE.png" width="420" alt="EYASE Confusion Matrix">
-</p>
-<p align="center">
-  <img src="assets/confusion_matrix_CREMA-D.png" width="420" alt="CREMA-D Confusion Matrix">
-  <img src="assets/confusion_matrix_TESS.png" width="420" alt="TESS Confusion Matrix">
 </p>
 
 ---
 
 # 📂 Repository Infrastructure
 
-The layout is strictly modularized to separate the backend core API layer from the frontend visualization and the deployment configurations:
-
 ```text
 PACE-Egyptian-Psychiatric-Speech-Analytics/
 │
-├── .env.example                    # Template for environment secrets (HF_TOKEN)
 ├── requirements.txt                # Pinned microservice and deep learning package versions
 ├── index.html                      # The decoupled Vanilla JS & HTML clinical dashboard interface
 │
 ├── app/                            # Core FastAPI Backend Module
 │   ├── __init__.py
-│   ├── config.py                   # Secure environment variables & authentication
+│   ├── config.py                   # Kaggle native model path configurations
 │   ├── ml_models.py                # Hardware allocation & heavy transformer initialization
-│   ├── services.py                 # Audio chunking, inference pipelines, and LLM reasoning
-│   ├── router.py                   # FastAPI endpoints & background tasks
+│   ├── services.py                 # 30-sec Audio chunking, inference pipelines, and LLM reasoning
+│   ├── router.py                   # FastAPI endpoints 
 │   └── main.py                     # ASGI server entry point
 │
 ├── Notebooks/                      
@@ -157,13 +124,7 @@ PACE-Egyptian-Psychiatric-Speech-Analytics/
 │   ├── 02_Evaluation.ipynb         # Quantitative analysis, metrics reporting, and confusion matrices
 │   └── 03_Model_API.ipynb          # THE KAGGLE RUNNER: Boots the repo directly into Kaggle GPUs
 │
-└── assets/                         # Evaluation plots, benchmark visualizations, and confusion graphs
-    ├── HuBERT_vs_Wav2Vec2.png
-    ├── best_accuracy_per_dataset.png
-    ├── confusion_matrix_BAVED.png
-    ├── confusion_matrix_CREMA-D.png
-    ├── confusion_matrix_EYASE.png
-    └── confusion_matrix_TESS.png
+└── assets/                         # Evaluation plots and confusion graphs
 ```
 
 ---
@@ -174,18 +135,10 @@ To test the application, deploy it directly to a Kaggle Notebook utilizing their
 
 1. Create a new Notebook on Kaggle.
 2. In the Session Options on the right panel, set the **Accelerator** to **GPU T4 x2**.
-3. Open the **Add-ons -> Secrets** tab. Add your `HF_TOKEN` (Hugging Face) and `NGROK_TOKEN` (PyNgrok).
+3. **Mount the required models:** Add the four necessary models (Whisper V3, Wav2Vec2 BAVED, Qwen 1.5B, and CAMeLBERT) to your Kaggle Notebook via the `Add Data` button so they are available in your `/kaggle/input/` directory. Ensure the paths match `app/config.py`.
 4. Upload or copy the contents of `Notebooks/03_Model_API.ipynb` into your Kaggle Notebook.
-5. **Run all cells.** The notebook will dynamically clone this repository, install the exact pinned `requirements.txt`, load the backend architecture across both GPUs, and output a secure Ngrok URL. Click the URL to interact with the full UI.
-
----
-
-# 🔮 Future Work: Clinical Psychiatric Taxonomy Expansion
-
-Current speech analytics focus on broad arousal descriptors (*High Intensity*, *Low Tired*). Future milestones will expand the classification scope toward granular clinical speech phenotypes mapped directly to DSM-5 diagnostic frameworks:
-* **Affective Flattening:** Tracking blunted pitch variants associated with depressive or negative schizophrenic phases.
-* **Anxiety and Panic Signatures:** High-frequency tremor tracking and rapid speaking rate variations.
-* **Pressured Speech Metrics:** Quantifying hyper-accelerated speech flows indicating mania patterns.
+5. **Run Cell 1.** The notebook will automatically install dependencies and dynamically restart the kernel.
+6. **Run Cell 2.** The backend architecture will load across both GPUs and output a secure, zero-token `Localtunnel` URL. Click the URL to interact with the full UI.
 
 ---
 
@@ -200,15 +153,3 @@ Current speech analytics focus on broad arousal descriptors (*High Intensity*, *
   url = {[https://github.com/Sober-Migo/PACE-Egyptian-Psychiatric-Speech-Analytics](https://github.com/Sober-Migo/PACE-Egyptian-Psychiatric-Speech-Analytics)}
 }
 ```
-
----
-
-# 👨‍💻 Author & Acknowledgments
-
-* **Developer:** Ahmed Magdy Hassan – Faculty of Computers and Artificial Intelligence, Fayoum University (CS Department).
-* **Acknowledgments:** Built using foundational open-source toolkits provided by Meta AI, OpenAI, CAMeL Lab, Alibaba Cloud, and Hugging Face.
-
-<div align="center">
-<br>
-👑 <b>If this implementation helped your clinical health-tech architectures, consider giving it a Star!</b>
-</div>

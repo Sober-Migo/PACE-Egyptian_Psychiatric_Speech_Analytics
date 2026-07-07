@@ -97,8 +97,12 @@ PACE adopts a **Late Decision-Level Multimodal Fusion Architecture**. Individual
 | **TESS** (Controlled Studio Environment) | `wav2vec2-base` | 3e-05 | 8 | **100.0%** |
 
 <p align="center">
+  <img src="assets/best_accuracy_per_dataset.png" width="420" alt="EYASE Confusion Matrix">
+  <img src="assets/HuBERT_vs_Wav2Vec2.png" width="420" alt="EYASE Confusion Matrix">
   <img src="assets/confusion_matrix_BAVED.png" width="420" alt="BAVED Confusion Matrix">
   <img src="assets/confusion_matrix_EYASE.png" width="420" alt="EYASE Confusion Matrix">
+  <img src="assets/confusion_matrix_TESS.png" width="420" alt="EYASE Confusion Matrix">
+  <img src="assets/confusion_matrix_CREMA-D.png" width="420" alt="EYASE Confusion Matrix">
 </p>
 
 ---

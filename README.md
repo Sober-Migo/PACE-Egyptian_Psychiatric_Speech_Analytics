@@ -21,7 +21,7 @@
 
 # 📖 Overview
 
-A Kaggle-native, multi-GPU asynchronous AI framework for Egyptian Arabic psychiatric speech analytics. Integrates late decision-level multimodal fusion (Wav2Vec2 + Whisper V3 Large + CAMeLBERT) with Qwen-powered clinical report generation.
+A high-performance, multi-GPU asynchronous AI framework for Egyptian Arabic psychiatric speech analytics. PACE integrates late decision-level multimodal fusion (Wav2Vec2 + Whisper V3 Large + CAMeLBERT) with Qwen-powered clinical report generation.
 
 Traditional SER setups struggle with long-form clinical audio and dialectal shifts. PACE bridges this gap via a production-grade asynchronous pipeline that ingests raw sessions, handles dynamic noise reduction, splits records into synchronized 30-second tensor windows, and parallelizes multi-model execution across isolated GPU lanes.
 
@@ -29,16 +29,15 @@ Traditional SER setups struggle with long-form clinical audio and dialectal shif
 
 ---
 
-# ☁️ Architecture: The Zero-Token Kaggle Pipeline
+# ☁️ Compute Environment & MLOps Decoupling
 
-**Notice: There is no local environment setup for this project.**
+PACE runs four large-scale transformer models concurrently. Attempting to execute this stack on a standard local machine will result in Out-Of-Memory (OOM) exceptions. 
 
-PACE runs four massive transformer models concurrently. Attempting to execute this stack on a standard local machine will instantly result in Out-Of-Memory (OOM) crashes. 
+To resolve this, the project is engineered to deploy seamlessly on Kaggle's dual T4 GPU environment, utilizing a strict MLOps decoupling strategy:
 
-To solve this, **the project is designed exclusively to run on Kaggle's dual T4 GPU environment** utilizing a strict MLOps decoupling strategy:
-1. **Zero-Token Offline Models:** Instead of pulling models from Hugging Face APIs, the architecture binds directly to Kaggle's internal `/kaggle/input/` datasets. This drastically reduces network bottlenecks and removes the need for `HF_TOKEN` authentications.
-2. **Zero-Token Networking:** We utilize `Localtunnel` inside the Kaggle kernel to expose the internal FastAPI endpoints to a public, interactive frontend without requiring Ngrok accounts or authentication keys.
-3. **Dynamic Resource Chunking:** The engine programmatically intercepts massive audio uploads, mathematically forces them into safe 30-second processing windows, and resolves the streams before memory degradation occurs.
+1. **Offline Model Binding:** To bypass network latency and API limitations, the architecture binds directly to local volume mounts (`/kaggle/input/`).
+2. **Secure Tunneling:** Utilizes Cloudflare Tunnels (`cloudflared`) to safely expose the internal FastAPI endpoints to a public frontend interface.
+3. **Dynamic Resource Chunking:** The engine programmatically intercepts raw audio streams, enforces strict 30-second processing windows, and releases GPU tensors incrementally to prevent memory degradation during long sessions.
 
 ---
 
@@ -87,7 +86,11 @@ PACE adopts a **Late Decision-Level Multimodal Fusion Architecture**. Individual
 
 ---
 
-# 📊 Benchmark Accuracies
+# 📊 Hyperparameter Benchmarks & Evaluation
+
+A rigorous hyperparameter grid search evaluated model boundaries over controlled 3-epoch execution runs, establishing `Wav2Vec2` as the optimal acoustic encoder over `HuBERT` setups.
+
+### 🏆 Benchmark Matrix
 
 | Dataset | Best Performing Backbone | Learning Rate | Batch Size | Validation Accuracy |
 | :--- | :--- | :---: | :---: | :---: |
@@ -97,8 +100,21 @@ PACE adopts a **Late Decision-Level Multimodal Fusion Architecture**. Individual
 | **TESS** (Controlled Studio Environment) | `wav2vec2-base` | 3e-05 | 8 | **100.0%** |
 
 <p align="center">
+  <img src="assets/HuBERT_vs_Wav2Vec2.png" width="450" alt="Backbone Performance Matrix">
+  <img src="assets/best_accuracy_per_dataset.png" width="450" alt="Validation Boundaries Metrics">
+</p>
+
+### 📈 Confusion Matrices
+
+The fine-tuned acoustic engine's class-wise discrimination capability was validated using confusion matrices across distinct language profiles, recording backgrounds, and clinical arousal intensities.
+
+<p align="center">
   <img src="assets/confusion_matrix_BAVED.png" width="420" alt="BAVED Confusion Matrix">
   <img src="assets/confusion_matrix_EYASE.png" width="420" alt="EYASE Confusion Matrix">
+</p>
+<p align="center">
+  <img src="assets/confusion_matrix_CREMA-D.png" width="420" alt="CREMA-D Confusion Matrix">
+  <img src="assets/confusion_matrix_TESS.png" width="420" alt="TESS Confusion Matrix">
 </p>
 
 ---
@@ -116,7 +132,7 @@ PACE-Egyptian-Psychiatric-Speech-Analytics/
 │   ├── config.py                   # Kaggle native model path configurations
 │   ├── ml_models.py                # Hardware allocation & heavy transformer initialization
 │   ├── services.py                 # 30-sec Audio chunking, inference pipelines, and LLM reasoning
-│   ├── router.py                   # FastAPI endpoints 
+│   ├── router.py                   # FastAPI endpoints & polling logic
 │   └── main.py                     # ASGI server entry point
 │
 ├── Notebooks/                      
@@ -124,19 +140,25 @@ PACE-Egyptian-Psychiatric-Speech-Analytics/
 │   └── 02_Evaluation.ipynb         # Quantitative analysis, metrics reporting, and confusion matrices
 │
 └── assets/                         # Evaluation plots and confusion graphs
+    ├── HuBERT_vs_Wav2Vec2.png
+    ├── best_accuracy_per_dataset.png
+    ├── confusion_matrix_BAVED.png
+    ├── confusion_matrix_CREMA-D.png
+    ├── confusion_matrix_EYASE.png
+    └── confusion_matrix_TESS.png
 ```
 
 ---
 
-# 🚀 Deployment & Execution (One-Click Kaggle Runner)
+# 🚀 Deployment & Execution (Kaggle Runner)
 
 To bypass local hardware limitations, we have prepared a pre-configured Kaggle Deployment Template with all necessary transformer models attached and dual GPUs provisioned.
 
-1. Open the **[PACE Kaggle Deployment Template](https://www.kaggle.com/code/ahmed4magdy/pace-production)**
-2. Click **"Copy & Edit"** in the top right corner. (This forks the environment to your Kaggle account using your free quota).
+1. Open the **[PACE Kaggle Deployment Template](https://www.kaggle.com/code/ahmed4magdy/pace-production/notebook)  -> ⚠️ Note You Must have a Kaggle account and login.**
+2. Click **"Copy & Edit"** in the top right corner. 
 3. Ensure the Accelerator in the right-hand panel is set to **GPU T4 x2**.
 4. Click **"Run All"**.
-5. The notebook will automatically pull this repository, restart the kernel, boot the engine across both GPUs, and generate a secure, zero-token `Localtunnel` URL at the bottom of the output. Click it to access the clinical dashboard.
+5. The notebook will automatically pull this repository, restart the kernel, boot the engine across both GPUs, and generate a secure `Cloudflare` URL at the bottom of the output. Click it to access the clinical dashboard.
 
 ---
 
@@ -172,3 +194,4 @@ Current speech analytics focus on broad arousal descriptors (*High Intensity*, *
 <br>
 👑 <b>If this implementation helped your clinical health-tech architectures, consider giving it a Star!</b>
 </div>
+```

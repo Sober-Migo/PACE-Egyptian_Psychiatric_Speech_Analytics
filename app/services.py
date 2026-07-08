@@ -3,6 +3,13 @@ import numpy as np
 import librosa
 import noisereduce as nr
 import torch
+import warnings
+
+# # Suppress annoying safe-fallback warnings from librosa and transformers
+# warnings.filterwarnings("ignore", message="PySoundFile failed. Trying audioread instead.")
+# warnings.filterwarnings("ignore", category=FutureWarning)
+# warnings.filterwarnings("ignore", category=UserWarning)
+
 from app.ml_models import (
     gpu_0, gpu_1, whisper_processor, whisper_model, 
     sentiment_pipeline, audio_processor, audio_model, 
@@ -26,7 +33,6 @@ def core_processing_pipeline(session_files_list: list):
         samples = file_item["samples"]
         sr = file_item["sr"]
         
-        # Resample and denoise
         if samples.ndim > 1:
             samples = np.mean(samples, axis=0 if samples.shape[0] < samples.shape[1] else 1)
         if sr != 16000:
@@ -34,7 +40,6 @@ def core_processing_pipeline(session_files_list: list):
         samples = samples.astype(np.float32)
         samples = nr.reduce_noise(y=samples, sr=16000, prop_decrease=0.8)
         
-        # Enforce 30-second max processing units
         chunks = chunk_audio(samples, 16000, max_duration=30)
         for c_idx, chunk in enumerate(chunks):
             clean_audios_list.append(np.ascontiguousarray(chunk, dtype=np.float32))
@@ -55,7 +60,14 @@ def core_processing_pipeline(session_files_list: list):
             input_features = wh_inputs.input_features.to(device=gpu_0["name"])
             asr_attention_mask = wh_inputs.attention_mask.to(device=gpu_0["name"])
             with torch.no_grad():
-                predicted_batch_ids = whisper_model.generate(input_features, attention_mask=asr_attention_mask, max_new_tokens=150, num_beams=1)
+                # Enforce Arabic transcription strictly at the generation level to prevent hallucination
+                predicted_batch_ids = whisper_model.generate(
+                    input_features, 
+                    attention_mask=asr_attention_mask, 
+                    max_new_tokens=150,
+                    language="arabic",
+                    task="transcribe"
+                )
                 
         with torch.cuda.stream(stream_gpu1):
             audio_inputs = audio_processor(batch_audios, sampling_rate=16000, return_attention_mask=True, return_tensors="pt", padding=True)
@@ -88,15 +100,15 @@ def generate_clinical_report(session_timeline):
     prompt_context = "".join(f"[{c['timestamp_sec']}s] Text: '{c['transcript']}' | Mood: {c['vocal_acoustic_emotion']}\n" for c in session_timeline)
     
     system_instruction = (
-        "You are an expert psychiatric assistant. Write a clinical report in English analyzing the patient's emotional journey. "
-        "Format strictly with Markdown headers: ### 1️⃣ Psychodynamic Summary, ### 2️⃣ Energy Curve, ### 3️⃣ Recommendations."
+        "You are an expert psychiatric assistant. Write a clinical report in Arabic analyzing the patient's emotional journey. "
+        "Format strictly with Markdown headers: ### 1️⃣ ملخص الجلسة, ### 2️⃣ تحليل الطاقة والمزاج, ### 3️⃣ توصيات."
     )
     full_prompt = f"<|im_start|>system\n{system_instruction}<|im_end|>\n<|im_start|>user\nData:\n{prompt_context}<|im_end|>\n<|im_start|>assistant\n"
     
+    # Removed generation_config override to resolve Qwen warning
     llm_res = qwen_pipeline(full_prompt, max_new_tokens=1024, temperature=0.3, repetition_penalty=1.15)
-    report = llm_res[0]["generated_text"].split("<|im_start|>assistant\n")[-1]
+    report = llm_res[0]["generated_text"].split("<|im_start|>assistant\n")[-1].strip()
     
-    html_report = report.replace("### 1️⃣", "<h3 class='gradient-text'>1️⃣").replace("### 2️⃣", "<h3 class='gradient-text'>2️⃣").replace("### 3️⃣", "<h3 class='gradient-text'>3️⃣")
     llm_latency = round(time.time() - t_llm_start, 4)
     
-    return html_report.strip(), llm_latency
+    return report, llm_latency

@@ -97,12 +97,8 @@ PACE adopts a **Late Decision-Level Multimodal Fusion Architecture**. Individual
 | **TESS** (Controlled Studio Environment) | `wav2vec2-base` | 3e-05 | 8 | **100.0%** |
 
 <p align="center">
-  <img src="assets/best_accuracy_per_dataset.png" width="420" alt="EYASE Confusion Matrix">
-  <img src="assets/HuBERT_vs_Wav2Vec2.png" width="420" alt="EYASE Confusion Matrix">
   <img src="assets/confusion_matrix_BAVED.png" width="420" alt="BAVED Confusion Matrix">
   <img src="assets/confusion_matrix_EYASE.png" width="420" alt="EYASE Confusion Matrix">
-  <img src="assets/confusion_matrix_TESS.png" width="420" alt="EYASE Confusion Matrix">
-  <img src="assets/confusion_matrix_CREMA-D.png" width="420" alt="EYASE Confusion Matrix">
 </p>
 
 ---
@@ -125,24 +121,31 @@ PACE-Egyptian-Psychiatric-Speech-Analytics/
 │
 ├── Notebooks/                      
 │   ├── 01_Training.ipynb           # Data preparation, hyperparameter sweeps, and model fine-tuning
-│   ├── 02_Evaluation.ipynb         # Quantitative analysis, metrics reporting, and confusion matrices
-│   └── 03_Model_API.ipynb          # THE KAGGLE RUNNER: Boots the repo directly into Kaggle GPUs
+│   └── 02_Evaluation.ipynb         # Quantitative analysis, metrics reporting, and confusion matrices
 │
 └── assets/                         # Evaluation plots and confusion graphs
 ```
 
 ---
 
-# 🚀 Deployment & Execution (Kaggle Only)
+# 🚀 Deployment & Execution (One-Click Kaggle Runner)
 
-To test the application, deploy it directly to a Kaggle Notebook utilizing their dual GPU hardware.
+To bypass local hardware limitations, we have prepared a pre-configured Kaggle Deployment Template with all necessary transformer models attached and dual GPUs provisioned.
 
-1. Create a new Notebook on Kaggle.
-2. In the Session Options on the right panel, set the **Accelerator** to **GPU T4 x2**.
-3. **Mount the required models:** Add the four necessary models (Whisper V3, Wav2Vec2 BAVED, Qwen 1.5B, and CAMeLBERT) to your Kaggle Notebook via the `Add Data` button so they are available in your `/kaggle/input/` directory. Ensure the paths match `app/config.py`.
-4. Upload or copy the contents of `Notebooks/03_Model_API.ipynb` into your Kaggle Notebook.
-5. **Run Cell 1.** The notebook will automatically install dependencies and dynamically restart the kernel.
-6. **Run Cell 2.** The backend architecture will load across both GPUs and output a secure, zero-token `Localtunnel` URL. Click the URL to interact with the full UI.
+1. Open the **[PACE Kaggle Deployment Template](https://www.kaggle.com/code/ahmed4magdy/pace-production)**
+2. Click **"Copy & Edit"** in the top right corner. (This forks the environment to your Kaggle account using your free quota).
+3. Ensure the Accelerator in the right-hand panel is set to **GPU T4 x2**.
+4. Click **"Run All"**.
+5. The notebook will automatically pull this repository, restart the kernel, boot the engine across both GPUs, and generate a secure, zero-token `Localtunnel` URL at the bottom of the output. Click it to access the clinical dashboard.
+
+---
+
+# 🔮 Future Work: Clinical Psychiatric Taxonomy Expansion
+
+Current speech analytics focus on broad arousal descriptors (*High Intensity*, *Low Tired*). Future milestones will expand the classification scope toward granular clinical speech phenotypes mapped directly to DSM-5 diagnostic frameworks:
+* **Affective Flattening:** Tracking blunted pitch variants associated with depressive or negative schizophrenic phases.
+* **Anxiety and Panic Signatures:** High-frequency tremor tracking and rapid speaking rate variations.
+* **Pressured Speech Metrics:** Quantifying hyper-accelerated speech flows indicating mania patterns.
 
 ---
 
@@ -157,3 +160,15 @@ To test the application, deploy it directly to a Kaggle Notebook utilizing their
   url = {[https://github.com/Sober-Migo/PACE-Egyptian-Psychiatric-Speech-Analytics](https://github.com/Sober-Migo/PACE-Egyptian-Psychiatric-Speech-Analytics)}
 }
 ```
+
+---
+
+# 👨‍💻 Author & Acknowledgments
+
+* **Developer:** Ahmed Magdy Hassan
+* **Acknowledgments:** Built using foundational open-source toolkits provided by Meta AI, OpenAI, CAMeL Lab, Alibaba Cloud, and Hugging Face.
+
+<div align="center">
+<br>
+👑 <b>If this implementation helped your clinical health-tech architectures, consider giving it a Star!</b>
+</div>

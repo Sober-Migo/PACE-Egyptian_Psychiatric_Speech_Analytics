@@ -29,6 +29,12 @@ Traditional SER setups struggle with long-form clinical audio and dialectal shif
 
 ---
 
+# 🎥 System Demo
+
+<!-- Example: <img src="assets/demo.gif" width="800" alt="PACE UI Demo"> -->
+
+---
+
 # ☁️ Compute Environment & MLOps Decoupling
 
 PACE runs four large-scale transformer models concurrently. Attempting to execute this stack on a standard local machine will result in Out-Of-Memory (OOM) exceptions. 
@@ -154,7 +160,7 @@ PACE-Egyptian-Psychiatric-Speech-Analytics/
 
 To bypass local hardware limitations, we have prepared a pre-configured Kaggle Deployment Template with all necessary transformer models attached and dual GPUs provisioned.
 
-1. Open the **[PACE Kaggle Deployment Template](https://www.kaggle.com/code/ahmed4magdy/pace-production/notebook)  -> ⚠️ Note You Must have a Kaggle account and login.**
+1. Open the **[PACE Kaggle Deployment Template](https://www.kaggle.com/code/ahmed4magdy/pace-production/notebook)  -> ⚠️ Note: You must have a Kaggle account and be logged in.**
 2. Click **"Copy & Edit"** in the top right corner. 
 3. Ensure the Accelerator in the right-hand panel is set to **GPU T4 x2**.
 4. Click **"Run All"**.
@@ -194,4 +200,3 @@ Current speech analytics focus on broad arousal descriptors (*High Intensity*, *
 <br>
 👑 <b>If this implementation helped your clinical health-tech architectures, consider giving it a Star!</b>
 </div>
-```

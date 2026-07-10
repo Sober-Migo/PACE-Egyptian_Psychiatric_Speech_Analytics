@@ -146,6 +146,7 @@ PACE-Egyptian-Psychiatric-Speech-Analytics/
 │   └── 02_Evaluation.ipynb         # Quantitative analysis, metrics reporting, and confusion matrices
 │
 └── assets/                         # Evaluation plots and confusion graphs
+    ├── demo.gif
     ├── HuBERT_vs_Wav2Vec2.png
     ├── best_accuracy_per_dataset.png
     ├── confusion_matrix_BAVED.png

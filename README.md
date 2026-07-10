@@ -31,7 +31,7 @@ Traditional SER setups struggle with long-form clinical audio and dialectal shif
 
 # 🎥 System Demo
 
-<!-- Example: <img src="assets/demo.gif" width="800" alt="PACE UI Demo"> -->
+ <img src="assets/demo.gif" width="800" alt="PACE UI Demo">
 
 ---
 

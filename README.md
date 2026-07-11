@@ -186,7 +186,7 @@ Current speech analytics focus on broad arousal descriptors (*High Intensity*, *
   title = {PACE: Multimodal Egyptian Psychiatric Speech Analytics Engine},
   year = {2026},
   publisher = {GitHub},
-  url = {[https://github.com/Sober-Migo/PACE-Egyptian-Psychiatric-Speech-Analytics](https://github.com/Sober-Migo/PACE-Egyptian-Psychiatric-Speech-Analytics)}
+  url = {[https://github.com/Sober-Migo/PACE-Egyptian_Psychiatric_Speech_Analytics](https://github.com/Sober-Migo/PACE-Egyptian-Psychiatric_Speech_Analytics)}
 }
 ```
 

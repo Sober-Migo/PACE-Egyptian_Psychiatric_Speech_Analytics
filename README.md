@@ -31,7 +31,10 @@ Traditional SER setups struggle with long-form clinical audio and dialectal shif
 
 # 🎥 System Demo
 
- <img src="assets/demo.gif" width="800" alt="PACE UI Demo">
+### Real-Time Inference UI (FastAPI & Dashboard)
+<img src="assets/demo.gif" width="800" alt="PACE UI Demo">
+
+> 💡 **Note:** For a complete, step-by-step visual guide on deploying the Kaggle backend and connecting it to the UI, please refer to our [Full Setup Video Tutorial](assets/full_demo.mp4).
 
 ---
 
@@ -145,8 +148,9 @@ PACE-Egyptian-Psychiatric-Speech-Analytics/
 │   ├── 01_Training.ipynb           # Data preparation, hyperparameter sweeps, and model fine-tuning
 │   └── 02_Evaluation.ipynb         # Quantitative analysis, metrics reporting, and confusion matrices
 │
-└── assets/                         # Evaluation plots and confusion graphs
-    ├── demo.gif
+└── assets/                         # Evaluation plots, confusion graphs, and media files
+    ├── demo.gif                    # Animated UI demonstration
+    ├── full_demo.mp4                    # Full Kaggle deployment and execution tutorial video
     ├── HuBERT_vs_Wav2Vec2.png
     ├── best_accuracy_per_dataset.png
     ├── confusion_matrix_BAVED.png
@@ -158,6 +162,8 @@ PACE-Egyptian-Psychiatric-Speech-Analytics/
 ---
 
 # 🚀 Deployment & Execution (Kaggle Runner)
+
+> 📹 **Need a visual walkthrough?** We highly recommend watching the [**Full Setup & Execution Video Tutorial (assets/full_demo.mp4)**](assets/full_demo.mp4) before you begin. It covers every step from cloning to running the backend seamlessly.
 
 To bypass local hardware limitations, we have prepared a pre-configured Kaggle Deployment Template with all necessary transformer models attached and dual GPUs provisioned.
 
